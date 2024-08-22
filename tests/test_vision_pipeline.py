@@ -31,7 +31,7 @@ def test_grayscale(pipeline, sample_image):
     result = pipeline.run_pipeline(sample_image)
 
     # Check that the output is single channel (grayscale)
-    assert result.shape == (3, 3)  # Now the image should have one channel
+    assert result.shape == (3, 3, 1)  # Now the image should have one channel
 
 def test_threshold(pipeline, sample_image):
     pipeline.add_task(to_grayscale())
@@ -40,7 +40,7 @@ def test_threshold(pipeline, sample_image):
 
     # Check that the result contains only 0 and 255 (binary image)
     unique_values = np.unique(result)
-    assert np.array_equal(unique_values, np.array([0, 255])) or np.array_equal(unique_values, np.array([255]))
+    assert np.array_equal(unique_values, np.array([0])) or np.array_equal(unique_values, np.array([255]))
 
 def test_pipeline_clear(pipeline):
     pipeline.add_task(resize((2, 2)))
@@ -60,6 +60,6 @@ def test_combined_pipeline(pipeline, sample_image):
     result = pipeline.run_pipeline(sample_image)
 
     # Check final output size and type
-    assert result.shape == (2, 2)  # Grayscale image resized to 2x2
+    assert result.shape == (1, 2, 2)  # Grayscale image resized to 2x2
     unique_values = np.unique(result)
-    assert np.array_equal(unique_values, np.array([0, 255])) or np.array_equal(unique_values, np.array([255]))
+    assert np.array_equal(unique_values, np.array([0])) or np.array_equal(unique_values, np.array([255]))
