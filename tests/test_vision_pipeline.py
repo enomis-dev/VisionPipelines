@@ -1,10 +1,11 @@
 import cv2
+import pytest
 import torch
 import kornia
 import numpy as np
 from typing import List, Callable, Union
-from vision_pipeline.vision_pipeline import VisionPipeline
-from vision_pipeline.utils import resize, to_grayscale, apply_threshold
+from src.vision_pipeline import VisionPipeline
+from src.utils import resize, to_grayscale, apply_threshold
 
 @pytest.fixture
 def sample_image():
