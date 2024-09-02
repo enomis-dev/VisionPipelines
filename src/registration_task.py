@@ -1,7 +1,7 @@
 import cv2
 import torch
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 from src.task import Task
 from src.constants import RegistrationMethod  # Import the RegistrationMethod enum
 
@@ -16,37 +16,42 @@ class RegistrationTask(Task):
         self.image1 = image1
         self.method = method
 
-    def __call__(self, image_tensor: torch.Tensor) -> torch.Tensor:
+    def __call__(self, image2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Perform image registration.
 
-        :param image_tensor: The image to register, as a PyTorch tensor.
-        :return: The registered image, as a PyTorch tensor.
+        :param image2: The image to register, as a numpy array (RGB).
+        :return: A tuple of the registered image and the keypoints found in each image.
+                 The keypoints are returned as a numpy array of shape (4, N), where N is the number of points found.
         """
-        # Convert tensors to numpy arrays
-        image2 = (image_tensor.squeeze(0).permute(1, 2, 0).numpy() * 255).astype(np.uint8)
-
         # Perform registration
-        registered_image = self.register_images(self.image1, image2)
+        registered_image, keypoints = self.register_images(self.image1, image2)
 
-        # Convert the registered image back to tensor
-        registered_image_tensor = torch.tensor(registered_image).float() / 255.0
-        registered_image_tensor = registered_image_tensor.permute(2, 0, 1).unsqueeze(0)  # HWC to NCHW
+        return registered_image, keypoints
 
-        return registered_image_tensor
-
-    def register_images(self, image1: np.ndarray, image2: np.ndarray) -> np.ndarray:
+    def register_images(self, image1: np.ndarray, image2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Register image2 to image1 using the specified method."""
+        # Convert images to grayscale if they are in RGB
+        if len(image1.shape) == 3:
+            image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+        else:
+            image1_gray = image1
+
+        if len(image2.shape) == 3:
+            image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+        else:
+            image2_gray = image2
+
         if self.method == RegistrationMethod.ORB:
             # ORB Detector
             orb = cv2.ORB_create()
-            keypoints1, descriptors1 = orb.detectAndCompute(image1, None)
-            keypoints2, descriptors2 = orb.detectAndCompute(image2, None)
+            keypoints1, descriptors1 = orb.detectAndCompute(image1_gray, None)
+            keypoints2, descriptors2 = orb.detectAndCompute(image2_gray, None)
         elif self.method == RegistrationMethod.SIFT:
             # SIFT Detector
             sift = cv2.SIFT_create()
-            keypoints1, descriptors1 = sift.detectAndCompute(image1, None)
-            keypoints2, descriptors2 = sift.detectAndCompute(image2, None)
+            keypoints1, descriptors1 = sift.detectAndCompute(image1_gray, None)
+            keypoints2, descriptors2 = sift.detectAndCompute(image2_gray, None)
         else:
             raise ValueError(f"Unknown method: {self.method}")
 
@@ -66,4 +71,7 @@ class RegistrationTask(Task):
         height, width = image1.shape[:2]
         registered_image = cv2.warpPerspective(image2, H, (width, height))
 
-        return registered_image
+        # Prepare the keypoints output array (4xN)
+        keypoints = np.vstack((points1.squeeze(1).T, points2.squeeze(1).T))
+
+        return registered_image, keypoints

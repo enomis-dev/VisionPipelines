@@ -1,10 +1,17 @@
-import torch
-import numpy as np
 from abc import ABC, abstractmethod
+import numpy as np
 
-# Abstract base class for all tasks in the pipeline
 class Task(ABC):
+    """
+    An abstract base class for tasks involving image processing.
+    """
+
     @abstractmethod
-    def __call__(self, image_tensor: torch.Tensor) -> torch.Tensor:
-        """Process the input image tensor and return the modified tensor."""
+    def __call__(self, image: np.ndarray) -> np.ndarray:
+        """
+        Perform the task on the given image.
+
+        :param image: The image to process, as a numpy array.
+        :return: The processed image, as a numpy array.
+        """
         pass
