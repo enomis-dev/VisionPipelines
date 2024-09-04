@@ -11,7 +11,7 @@ from PIL import Image
 def setup_images():
     # Load images using OpenCV
     image1 = cv2.imread('tests/data/IMG1_low_res.jpg')
-    image2 = cv2.imread('tests/data/IMG1_low_res.jpg')
+    image2 = cv2.imread('tests/data/IMG2_low_res.jpg')
 
     return image1, image2
 

@@ -8,3 +8,9 @@ class TaskType(Enum):
 class RegistrationMethod(Enum):
     ORB = "ORB"
     SIFT = "SIFT"
+
+
+class DetectionMethod(Enum):
+    YOLO = "YOLO"
+    FASTER_RCNN = "FASTER_RCNN"
+    SSD = "SSD"

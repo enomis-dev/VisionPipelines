@@ -1,0 +1,6 @@
+.vscode/
+# Ignore Python bytecode files
+__pycache__/
+tests/__pycache__/
+*.pyc
+*.pyo
