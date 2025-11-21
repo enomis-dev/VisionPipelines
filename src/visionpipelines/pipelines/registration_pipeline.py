@@ -3,56 +3,73 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Tuple
 from visionpipelines.tasks.registration_task import RegistrationTask
-from visionpipelines.constants import DetectionMethod
-from visionpipelines.pipelines.vision_pipeline import VisionPipeline
+from visionpipelines.constants import RegistrationMethod
+from visionpipelines.pipelines.vision_pipeline import TaskBasedPipeline
 
 
-class RegistrationPipeline(VisionPipeline):
+class RegistrationPipeline(TaskBasedPipeline):
+    """
+    Pipeline for image registration (alignment).
+    
+    This pipeline registers two images by detecting keypoints, matching them,
+    and computing a transformation to align one image with the other.
+    """
+    
     def __init__(
-        self, method: str, model: torch.nn.Module = None,
-        device: torch.device = torch.device('cpu')):
-        """Initialize the registration pipeline with a registration model."""
-        super().__init__()
-        self.registrator = RegistrationTask(method=method)
-
-    def register_images(self, image1: np.ndarray, image2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Detect objects in the image using the specified method."""
-        registered_image, keypoints = self.registrator.register_images(image1, image2)
-        return registered_image, keypoints
-
-    def pre_process(self, image1: np.ndarray, image2: np.ndarray) -> np.ndarray:
-        image1, image2 = self.registrator.pre_process(image1, image2)
-        return image1, image2
-
-    def run_pipeline(self, image1: np.ndarray, image2: np.ndarray) -> np.ndarray:
-        """Perform object detection"""
-        image1, image2 = self.pre_process(image1, image2)
-        registered_image, keypoints = self.register_images(image1, image2)
-        return registered_image, keypoints
-
-    def draw_boxes(self, image: np.ndarray, boxes: List[Tuple[int, int, int, int]]) -> np.ndarray:
-        """Draw bounding boxes on the image."""
-        return self.registrator.draw_boxes(image, boxes)
-
-    def plot_matches(self, image1, image2, keypoints):
+        self, 
+        method: RegistrationMethod, 
+        model: torch.nn.Module = None,
+        device: torch.device = torch.device('cpu')
+    ):
         """
-        Plots the matches between two images.
+        Initialize the registration pipeline.
+        
+        Args:
+            method: The registration method to use (RegistrationMethod enum).
+            model: Optional model (not currently used for registration).
+            device: Device to run on (not currently used for registration).
+        """
+        task = RegistrationTask(method=method)
+        super().__init__(task=task)
+        self.registrator = task  # Keep for backward compatibility
 
-        Parameters:
-        - image1: First image (as a numpy array)
-        - image2: Second image (as a numpy array)
-        - keypoints: A list or array of keypoints with shape (4, n), where:
-            keypoints[0, :] - x coordinates for image1
-            keypoints[1, :] - y coordinates for image1
-            keypoints[2, :] - x coordinates for image2
-            keypoints[3, :] - y coordinates for image2
+    def run_pipeline(self, image1: np.ndarray, image2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Run the registration pipeline on two images.
+        
+        Args:
+            image1: The reference image.
+            image2: The image to be registered to image1.
+            
+        Returns:
+            Tuple of (registered_image, keypoints) where:
+            - registered_image: image2 warped to align with image1
+            - keypoints: Array of shape (4, N) containing matched keypoint coordinates
+        """
+        return super().run_pipeline(image1, image2)
+
+    def plot_matches(self, image1: np.ndarray, image2: np.ndarray, keypoints: np.ndarray):
+        """
+        Plot the matches between two images.
+
+        Args:
+            image1: First image (as a numpy array, RGB or grayscale).
+            image2: Second image (as a numpy array, RGB or grayscale).
+            keypoints: Array of keypoints with shape (4, n), where:
+                keypoints[0, :] - x coordinates for image1
+                keypoints[1, :] - y coordinates for image1
+                keypoints[2, :] - x coordinates for image2
+                keypoints[3, :] - y coordinates for image2
         """
         # Create a combined image by stacking the two images horizontally
         combined_image = np.hstack((image1, image2))
 
         # Plot the combined image
         plt.figure(figsize=(10, 5))
-        plt.imshow(combined_image, cmap='gray')
+        if len(combined_image.shape) == 2:
+            plt.imshow(combined_image, cmap='gray')
+        else:
+            plt.imshow(combined_image)
 
         num_keypoints = keypoints.shape[1]
 

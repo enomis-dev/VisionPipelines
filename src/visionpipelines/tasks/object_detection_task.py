@@ -41,45 +41,69 @@ class ObjectDetectionTask(Task):
 
         return model
 
-    def detect_objects(self, image: torch.Tensor) -> List[Tuple[int, int, int, int]]:
-        """Detect objects in the image using the specified method."""
+    def execute(self, image: torch.Tensor) -> List[dict]:
+        """
+        Execute object detection on the preprocessed image.
+        
+        Args:
+            image: Preprocessed image tensor.
+            
+        Returns:
+            List of detection dictionaries from the model.
+        """
         if self.method == DetectionMethod.FASTER_RCNN:
-            return self.detect_faster_rcnn(image)
+            return self._detect_faster_rcnn(image)
         else:
             raise ValueError(f"Unknown method: {self.method}")
 
-    def detect_faster_rcnn(self, image: torch.Tensor) -> List[Tuple[int, int, int, int]]:
+    def _detect_faster_rcnn(self, image: torch.Tensor) -> List[dict]:
         """Detect objects using the Faster R-CNN method."""
         # Inference
         with torch.no_grad():
             outputs = self.model(image)
-
         return outputs
 
     def pre_process(self, image: np.ndarray) -> torch.Tensor:
-        """Preprocess the image for the model input."""
+        """
+        Preprocess the image for the model input.
+        
+        Args:
+            image: Input image as numpy array (BGR format from OpenCV).
+            
+        Returns:
+            Preprocessed image as torch tensor.
+        """
         # Convert image to RGB if it's in BGR (as OpenCV loads images in BGR format)
         if len(image.shape) == 3:
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         else:
             image_rgb = image
 
-        image_tensor = F.to_tensor(image).unsqueeze(0).to(self.device)
+        image_tensor = F.to_tensor(image_rgb).unsqueeze(0).to(self.device)
         return image_tensor
 
-    def post_process(self, outputs: torch.Tensor, threshold=0.5) -> List[Tuple[int, int, int, int]]:
-        """Post-process the output of the object detection task"""
-        boxes = []
-        labels = []
+    def post_process(self, outputs: List[dict], threshold: float = 0.5) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Post-process the output of the object detection task.
+        
+        Args:
+            outputs: List of detection dictionaries from the model.
+            threshold: Confidence threshold for filtering detections.
+            
+        Returns:
+            Tuple of (filtered_boxes, filtered_labels, filtered_scores) as numpy arrays.
+        """
         # Outputs is a list of dictionaries, each containing the detections for one image
         output = outputs[0]
         scores = output['scores'].cpu().numpy()
         boxes = output['boxes'].cpu().numpy()
         labels = output['labels'].cpu().numpy()
 
-        filtered_boxes = boxes[scores >= threshold]
-        filtered_labels = labels[scores >= threshold]
-        filtered_scores = scores[scores >= threshold]
+        # Filter by threshold
+        mask = scores >= threshold
+        filtered_boxes = boxes[mask]
+        filtered_labels = labels[mask]
+        filtered_scores = scores[mask]
 
         return filtered_boxes, filtered_labels, filtered_scores
 

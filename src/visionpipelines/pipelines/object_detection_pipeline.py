@@ -3,43 +3,77 @@ import numpy as np
 from typing import List, Tuple
 from visionpipelines.tasks.object_detection_task import ObjectDetectionTask
 from visionpipelines.constants import DetectionMethod
-from visionpipelines.pipelines.vision_pipeline import VisionPipeline
+from visionpipelines.pipelines.vision_pipeline import TaskBasedPipeline
 
 
-class ObjectDetectionPipeline(VisionPipeline):
-    def __init__(self, method, model: torch.nn.Module = None, device: torch.device = torch.device('cpu')):
-        """Initialize the object detection pipeline with a detection model."""
-        super().__init__()
-        self.detector = ObjectDetectionTask(method=method, model=model)
+class ObjectDetectionPipeline(TaskBasedPipeline):
+    """
+    Pipeline for object detection in images.
+    
+    This pipeline detects objects in images using various detection methods
+    (e.g., Faster R-CNN) and returns bounding boxes, labels, and scores.
+    """
+    
+    def __init__(
+        self, 
+        method: DetectionMethod, 
+        model: torch.nn.Module = None, 
+        device: torch.device = torch.device('cpu'),
+        threshold: float = 0.5
+    ):
+        """
+        Initialize the object detection pipeline.
+        
+        Args:
+            method: The detection method to use (DetectionMethod enum).
+            model: Optional pre-trained model. If None, a default model is loaded.
+            device: Device to run inference on.
+            threshold: Confidence threshold for filtering detections.
+        """
+        task = ObjectDetectionTask(method=method, model=model)
+        super().__init__(task=task)
+        self.detector = task  # Keep for backward compatibility
+        self.threshold = threshold
 
-    def add_detection_task(self):
-        """Add the object detection task to the pipeline."""
-        self.tasks.append(self.pre_process)
-        self.tasks.append(self.detect_objects)
-        self.tasks.append(self.post_process)
-
-    def detect_objects(self, image: torch.Tensor) -> List[Tuple[int, int, int, int]]:
-        """Detect objects in the image using the specified method."""
-        objects = self.detector.detect_objects(image)
-        return objects
-
-    def pre_process(self, image: np.ndarray) -> torch.Tensor:
-        image_tensor = self.detector.pre_process(image)
-        return image_tensor
-
-    def post_process(self, outputs: torch.Tensor) -> List[Tuple[int, int, int, int]]:
-        """Post-process the detection outputs to extract bounding boxes."""
-        boxes = self.detector.post_process(outputs)
-        return boxes
-
-    def run_pipeline(self, image: np.ndarray) -> np.ndarray:
-        """Perform object detection"""
-        self.add_detection_task()
-        output = super().run_pipeline(image)
-        return output
+    def run_pipeline(self, image: np.ndarray, threshold: float = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Run the object detection pipeline on an image.
+        
+        Args:
+            image: Input image as numpy array.
+            threshold: Optional confidence threshold (overrides default if provided).
+            
+        Returns:
+            Tuple of (boxes, labels, scores) as numpy arrays.
+        """
+        # Use provided threshold or default
+        thresh = threshold if threshold is not None else self.threshold
+        
+        # Run the base pipeline (preprocess -> execute)
+        outputs = self.task.execute(self.task.pre_process(image))
+        
+        # Post-process with threshold
+        boxes, labels, scores = self.task.post_process(outputs, threshold=thresh)
+        
+        return boxes, labels, scores
 
     def draw_boxes(
-        self, image: np.ndarray, boxes: np.ndarray, labels: np.ndarray, scores: np.ndarray
-        ) -> np.ndarray:
-        """Draw bounding boxes on the image."""
+        self, 
+        image: np.ndarray, 
+        boxes: np.ndarray, 
+        labels: np.ndarray, 
+        scores: np.ndarray
+    ) -> np.ndarray:
+        """
+        Draw bounding boxes on the image.
+        
+        Args:
+            image: Input image to draw on.
+            boxes: Array of bounding boxes.
+            labels: Array of class labels.
+            scores: Array of confidence scores.
+            
+        Returns:
+            Image with bounding boxes drawn.
+        """
         return self.detector.draw_boxes(image, boxes, labels, scores)
