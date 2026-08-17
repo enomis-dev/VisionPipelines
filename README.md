@@ -4,7 +4,7 @@
     <img src="project_image.webp" alt="VisionPipeline Thumbnail" width="400"/>
 </div>
 
-VisionPipelines makes it easy to build advanced image-processing pipelines for common computer vision tasks such as image registration and object detection, composed from reusable, testable building blocks.
+VisionPipelines makes it easy to build advanced image-processing pipelines for common computer vision tasks such as image registration, object detection, and semantic segmentation, composed from reusable, testable building blocks.
 
 ## Installation
 
@@ -49,6 +49,20 @@ registered_image, keypoints = pipeline.run_pipeline(image1, image2)
 pipeline.plot_matches(image1, image2, keypoints)
 ```
 
+### Semantic segmentation
+
+```python
+import cv2
+from visionpipelines import SegmentationPipeline, SegmentationMethod
+
+image = cv2.imread("image.jpg")
+
+pipeline = SegmentationPipeline(SegmentationMethod.DEEPLABV3)
+mask = pipeline.run_pipeline(image)
+
+overlaid = pipeline.overlay_mask(image, mask)
+```
+
 ### Custom function-based pipelines
 
 For simple transformations that don't need the full `Task` abstraction, compose a pipeline out of plain callables:
@@ -66,8 +80,8 @@ result = pipeline.run_pipeline(image_tensor)
 
 ## Architecture
 
-- **`Task`** — encapsulates a single operation (`pre_process` → `execute` → `post_process`), e.g. `ObjectDetectionTask`, `RegistrationTask`.
-- **`TaskBasedPipeline`** — runs a `Task` through its full lifecycle; used by `ObjectDetectionPipeline` and `RegistrationPipeline`.
+- **`Task`** — encapsulates a single operation (`pre_process` → `execute` → `post_process`), e.g. `ObjectDetectionTask`, `RegistrationTask`, `SegmentationTask`.
+- **`TaskBasedPipeline`** — runs a `Task` through its full lifecycle; used by `ObjectDetectionPipeline`, `RegistrationPipeline`, and `SegmentationPipeline`.
 - **`FunctionBasedPipeline`** — chains plain callables for lighter-weight transformations.
 
 To add a new capability, implement a `Task` subclass and, if useful, wrap it in a dedicated pipeline.

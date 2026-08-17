@@ -16,6 +16,11 @@ class DetectionMethod(Enum):
     SSD = "SSD"
 
 
+class SegmentationMethod(Enum):
+    DEEPLABV3 = "DEEPLABV3"
+    FCN = "FCN"
+
+
 class Labels:
     COCO_INSTANCE_CATEGORY_NAMES = [
         '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck',
