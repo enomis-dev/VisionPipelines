@@ -1,8 +1,6 @@
-import cv2
 import torch
 import kornia
-import numpy as np
-from typing import List, Callable, Union
+from typing import Callable
 
 
 def resize(size: tuple) -> Callable[[torch.Tensor], torch.Tensor]:

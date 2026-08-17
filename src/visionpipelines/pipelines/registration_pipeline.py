@@ -1,7 +1,6 @@
-import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import List, Tuple
+from typing import Tuple
 from visionpipelines.tasks.registration_task import RegistrationTask
 from visionpipelines.constants import RegistrationMethod
 from visionpipelines.pipelines.vision_pipeline import TaskBasedPipeline
@@ -15,23 +14,16 @@ class RegistrationPipeline(TaskBasedPipeline):
     and computing a transformation to align one image with the other.
     """
     
-    def __init__(
-        self, 
-        method: RegistrationMethod, 
-        model: torch.nn.Module = None,
-        device: torch.device = torch.device('cpu')
-    ):
+    def __init__(self, method: RegistrationMethod):
         """
         Initialize the registration pipeline.
-        
+
         Args:
             method: The registration method to use (RegistrationMethod enum).
-            model: Optional model (not currently used for registration).
-            device: Device to run on (not currently used for registration).
         """
         task = RegistrationTask(method=method)
         super().__init__(task=task)
-        self.registrator = task  # Keep for backward compatibility
+        self.registrator = task  # Alias for direct task access
 
     def run_pipeline(self, image1: np.ndarray, image2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """

@@ -16,7 +16,7 @@ class DetectionMethod(Enum):
     SSD = "SSD"
 
 
-class Labels():
+class Labels:
     COCO_INSTANCE_CATEGORY_NAMES = [
         '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck',
         'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat',

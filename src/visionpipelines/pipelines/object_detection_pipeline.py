@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import List, Tuple
+from typing import Optional, Tuple
 from visionpipelines.tasks.object_detection_task import ObjectDetectionTask
 from visionpipelines.constants import DetectionMethod
 from visionpipelines.pipelines.vision_pipeline import TaskBasedPipeline
@@ -15,24 +15,24 @@ class ObjectDetectionPipeline(TaskBasedPipeline):
     """
     
     def __init__(
-        self, 
-        method: DetectionMethod, 
-        model: torch.nn.Module = None, 
-        device: torch.device = torch.device('cpu'),
+        self,
+        method: DetectionMethod,
+        model: Optional[torch.nn.Module] = None,
+        device: Optional[torch.device] = None,
         threshold: float = 0.5
     ):
         """
         Initialize the object detection pipeline.
-        
+
         Args:
             method: The detection method to use (DetectionMethod enum).
             model: Optional pre-trained model. If None, a default model is loaded.
-            device: Device to run inference on.
+            device: Device to run inference on. Defaults to CUDA if available, else CPU.
             threshold: Confidence threshold for filtering detections.
         """
-        task = ObjectDetectionTask(method=method, model=model)
+        task = ObjectDetectionTask(method=method, model=model, device=device)
         super().__init__(task=task)
-        self.detector = task  # Keep for backward compatibility
+        self.detector = task  # Alias for direct task access
         self.threshold = threshold
 
     def run_pipeline(self, image: np.ndarray, threshold: float = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

@@ -1,28 +1,30 @@
 import cv2
 import torch
 import numpy as np
-from typing import Union, Tuple, List
-from torchvision.models.detection import fasterrcnn_resnet50_fpn
+from typing import Optional, Tuple, List
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights, fasterrcnn_resnet50_fpn
 from torchvision.transforms import functional as F
 from visionpipelines.tasks.task import Task
 from visionpipelines.constants import DetectionMethod, Labels
 
 class ObjectDetectionTask(Task):
-    def __init__(self, method: DetectionMethod = DetectionMethod.FASTER_RCNN, model: Union[torch.nn.Module, None] = None):
+    def __init__(
+        self,
+        method: DetectionMethod = DetectionMethod.FASTER_RCNN,
+        model: Optional[torch.nn.Module] = None,
+        device: Optional[torch.device] = None,
+    ):
         """
         Initialize the object detection task with the detection method and optionally the model to use.
 
         :param method: The method used for object detection (DetectionMethod).
         :param model: Optional, a pre-trained object detection model. If not provided, a default model is loaded
                       based on the selected method.
+        :param device: Device to run inference on. Defaults to CUDA if available, else CPU.
         """
         self.method = method
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-        if model is None:
-            self.model = self.load_default_model(method)
-        else:
-            self.model = model
+        self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = model if model is not None else self.load_default_model(method)
 
         self.model.to(self.device)
         self.model.eval()
@@ -35,7 +37,7 @@ class ObjectDetectionTask(Task):
         :return: The loaded pre-trained model.
         """
         if method == DetectionMethod.FASTER_RCNN:
-            model = fasterrcnn_resnet50_fpn(pretrained=True)
+            model = fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
         else:
             raise ValueError(f"Unknown method: {method}")
 

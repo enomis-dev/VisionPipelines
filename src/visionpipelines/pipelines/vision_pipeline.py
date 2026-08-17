@@ -1,8 +1,5 @@
-import cv2
-import torch
-import kornia
 import numpy as np
-from typing import List, Callable, Union, Any, Tuple
+from typing import Any, Callable, List
 from abc import ABC, abstractmethod
 
 class VisionPipeline(ABC):

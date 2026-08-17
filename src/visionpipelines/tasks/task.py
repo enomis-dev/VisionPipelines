@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Tuple, Union
-import numpy as np
-import torch
+from typing import Any
+
 
 class Task(ABC):
     """

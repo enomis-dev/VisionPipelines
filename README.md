@@ -4,136 +4,170 @@
     <img src="project_image.webp" alt="VisionPipeline Thumbnail" width="400"/>
 </div>
 
-The purpose of this project is to easy the use of advanced image processing algorithms for most common tasks as Image registration, segmentation, object detection and others...
+VisionPipelines makes it easy to build advanced image-processing pipelines for common computer vision tasks such as image registration and object detection, composed from reusable, testable building blocks.
 
+## Installation
 
+```bash
+pip install visionpipelines
+```
+
+Or add it to a project managed with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add visionpipelines
+```
+
+## Quickstart
+
+### Object detection
+
+```python
+import cv2
+from visionpipelines import ObjectDetectionPipeline, DetectionMethod
+
+image = cv2.imread("image.jpg")
+
+pipeline = ObjectDetectionPipeline(DetectionMethod.FASTER_RCNN, threshold=0.7)
+boxes, labels, scores = pipeline.run_pipeline(image)
+
+annotated = pipeline.draw_boxes(image, boxes, labels, scores)
+```
+
+### Image registration
+
+```python
+import cv2
+from visionpipelines import RegistrationPipeline, RegistrationMethod
+
+image1 = cv2.imread("reference.jpg")
+image2 = cv2.imread("moving.jpg")
+
+pipeline = RegistrationPipeline(RegistrationMethod.ORB)
+registered_image, keypoints = pipeline.run_pipeline(image1, image2)
+
+pipeline.plot_matches(image1, image2, keypoints)
+```
+
+### Custom function-based pipelines
+
+For simple transformations that don't need the full `Task` abstraction, compose a pipeline out of plain callables:
+
+```python
+from visionpipelines import FunctionBasedPipeline
+from visionpipelines.utils import resize, to_grayscale
+
+pipeline = FunctionBasedPipeline()
+pipeline.add_task(resize((256, 256)))
+pipeline.add_task(to_grayscale())
+
+result = pipeline.run_pipeline(image_tensor)
+```
+
+## Architecture
+
+- **`Task`** — encapsulates a single operation (`pre_process` → `execute` → `post_process`), e.g. `ObjectDetectionTask`, `RegistrationTask`.
+- **`TaskBasedPipeline`** — runs a `Task` through its full lifecycle; used by `ObjectDetectionPipeline` and `RegistrationPipeline`.
+- **`FunctionBasedPipeline`** — chains plain callables for lighter-weight transformations.
+
+To add a new capability, implement a `Task` subclass and, if useful, wrap it in a dedicated pipeline.
 
 ## Contributing to VisionPipelines
 
-Thank you for your interest in contributing to VisionPipeline! To ensure a smooth development experience and maintain consistency across contributions, please follow the guidelines below.
+Thank you for your interest in contributing to VisionPipelines! To ensure a smooth development experience and maintain consistency across contributions, please follow the guidelines below.
 
 ### Getting Started
 
-1. **Clone the Repository**
-
-   First, clone the repository to your local machine:
+1. **Clone the repository**
 
    ```bash
    git clone https://github.com/yourusername/visionpipeline.git
    cd visionpipeline
    ```
 
-2. **Set Up Your Development Environment**
+2. **Set up your development environment**
 
-   VisionPipeline uses [Poetry](https://python-poetry.org/) for dependency management. Poetry simplifies the process of installing and managing dependencies.
+   VisionPipelines uses [uv](https://docs.astral.sh/uv/) for dependency management and virtual environments.
 
-   - **Install Poetry** (if you haven't already):
-
-     ```bash
-     pip install poetry
-     ```
-
-   - **Create a Virtual Environment** (optional):
-
-     If you prefer to use a virtual environment manually rather than Poetry’s built-in environment, you can create one with:
+   - **Install uv** (if you haven't already):
 
      ```bash
-     python -m venv venv
+     pip install uv
      ```
 
-     Then activate the virtual environment:
-
-     - **On Windows**:
-       ```bash
-       venv\Scripts\activate
-       ```
-
-     - **On macOS and Linux**:
-       ```bash
-       source venv/bin/activate
-       ```
-
-   - **Install Project Dependencies**:
-
-     Using Poetry:
+   - **Install project dependencies**:
 
      ```bash
-     poetry install
+     uv sync
      ```
+
+     This creates a `.venv` and installs the project along with its dev dependencies. Run commands inside it with `uv run <command>`.
 
 ### Development and Testing
 
-- **Run Tests**: Ensure all tests pass before submitting a contribution. Run the test suite with:
+- **Run tests**: Ensure all tests pass before submitting a contribution.
 
   ```bash
-  pytest
+  uv run pytest
   ```
 
-- **Code Style**: Follow the [PEP 8](https://pep8.org/) style guide for Python code. Consistent formatting helps maintain readability and quality.
+- **Code style**: Follow [PEP 8](https://pep8.org/) for consistent formatting and readability.
 
 ### Making a Contribution
 
-1. **Fork the Repository**
+1. **Fork the repository** on GitHub.
 
-   Create a fork of the repository on GitHub to make your changes.
-
-2. **Create a Feature Branch**
-
-   Create a new branch for your changes:
+2. **Create a feature branch**
 
    ```bash
    git checkout -b your-feature-branch
    ```
 
-3. **Make Your Changes**
-
-   Edit code, add features, or fix bugs as necessary. Commit your changes with a descriptive message:
+3. **Make your changes**, then commit with a descriptive message:
 
    ```bash
    git add .
    git commit -m "Describe your changes"
    ```
 
-4. **Push Your Changes**
-
-   Push your branch to your forked repository:
+4. **Push your branch**
 
    ```bash
    git push origin your-feature-branch
    ```
 
-5. **Submit a Pull Request**
-
-   Open a pull request (PR) on GitHub from your forked repository to the original repository. Provide a clear description of your changes and why they should be merged.
+5. **Submit a pull request** from your fork to the original repository, with a clear description of your changes and why they should be merged.
 
 ### Reviewing and Merging
 
-- **Code Review**: All pull requests will be reviewed by the maintainers. Feedback will be provided, and necessary changes may be requested.
-
-- **Merge**: Once your pull request is approved and passes all tests, it will be merged into the main branch.
-
-### Additional Resources
-
-- [Poetry Documentation](https://python-poetry.org/docs/)
-- [PEP 8 Style Guide](https://pep8.org/)
-
-Thank you for contributing to VisionPipeline!
-
+- **Code review**: All pull requests are reviewed by the maintainers, who may request changes.
+- **Merge**: Once approved and passing all tests, your pull request is merged into `main`.
 
 ### Notebooks
 
-In order to play with the notebooks, if you have to create a local env, follow the section "Getting Started".
+To play with the notebooks, set up your environment as described in "Getting Started", then:
 
-1. **Install jupyter**
+1. **Install Jupyter**
 
-```bash
-pip install jupyter ipykernel
-```
+   ```bash
+   uv add --dev jupyter ipykernel
+   ```
 
-2. **Add kernel to jupyter notebook**
-python -m ipykernel install --user --name your_env_name --display-name "your_env_name"
+2. **Register the kernel**
 
-3. **Start jupyter-notebook**
-```bash
-jupyter notebook
-```
+   ```bash
+   uv run python -m ipykernel install --user --name visionpipelines --display-name "visionpipelines"
+   ```
+
+3. **Start Jupyter**
+
+   ```bash
+   uv run jupyter notebook
+   ```
+
+### Additional Resources
+
+- [uv Documentation](https://docs.astral.sh/uv/)
+- [PEP 8 Style Guide](https://pep8.org/)
+
+Thank you for contributing to VisionPipelines!
