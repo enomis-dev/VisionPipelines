@@ -18,6 +18,12 @@ Or add it to a project managed with [uv](https://docs.astral.sh/uv/):
 uv add visionpipelines
 ```
 
+Object detection supports Faster R-CNN and SSD out of the box. YOLO support is provided by [Ultralytics](https://github.com/ultralytics/ultralytics) (AGPL-3.0) and is an optional extra:
+
+```bash
+pip install "visionpipelines[yolo]"
+```
+
 ## Quickstart
 
 ### Object detection

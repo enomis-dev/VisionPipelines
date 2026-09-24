@@ -119,3 +119,96 @@ class TestObjectDetectionTask:
         with pytest.raises(ValueError, match="Unknown method"):
             task.execute(tensor)
 
+
+class _FakeYoloBoxes:
+    def __init__(self):
+        self.xyxy = torch.tensor([[10.0, 20.0, 50.0, 80.0], [0.0, 0.0, 5.0, 5.0]])
+        self.cls = torch.tensor([0.0, 2.0])
+        self.conf = torch.tensor([0.9, 0.3])
+
+
+class _FakeYoloResult:
+    boxes = _FakeYoloBoxes()
+
+
+class _FakeYolo:
+    """Stand-in for ultralytics.YOLO so the YOLO code path can be tested without the package."""
+    names = {0: 'person', 1: 'bicycle', 2: 'car'}
+
+    def __init__(self):
+        self.predict_kwargs = None
+
+    def predict(self, image, **kwargs):
+        self.predict_kwargs = kwargs
+        return [_FakeYoloResult()]
+
+    def eval(self):
+        raise AssertionError("eval() must not be called on ultralytics models")
+
+
+class TestObjectDetectionTaskYolo:
+    """Test suite for the YOLO code path of ObjectDetectionTask."""
+
+    def test_categories_from_model_names(self):
+        task = ObjectDetectionTask(DetectionMethod.YOLO, model=_FakeYolo())
+        assert task.categories == ['person', 'bicycle', 'car']
+
+    def test_pre_process_keeps_bgr_numpy(self):
+        task = ObjectDetectionTask(DetectionMethod.YOLO, model=_FakeYolo())
+        image = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
+        assert task.pre_process(image) is image
+
+    def test_pre_process_grayscale_to_three_channels(self):
+        task = ObjectDetectionTask(DetectionMethod.YOLO, model=_FakeYolo())
+        gray = np.random.randint(0, 255, (64, 64), dtype=np.uint8)
+        assert task.pre_process(gray).shape == (64, 64, 3)
+
+    def test_execute_and_post_process(self):
+        model = _FakeYolo()
+        task = ObjectDetectionTask(DetectionMethod.YOLO, model=model)
+        image = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
+
+        outputs = task.execute(task.pre_process(image))
+        boxes, labels, scores = task.post_process(outputs, threshold=0.5)
+
+        assert model.predict_kwargs['conf'] == 0.0
+        assert boxes.shape == (1, 4)
+        assert labels.tolist() == [0]
+        assert np.allclose(scores, [0.9])
+
+    def test_draw_boxes_uses_yolo_categories(self):
+        task = ObjectDetectionTask(DetectionMethod.YOLO, model=_FakeYolo())
+        image = np.zeros((100, 100, 3), dtype=np.uint8)
+        boxes = np.array([[10, 20, 50, 80]], dtype=np.float32)
+        result = task.draw_boxes(image, boxes, np.array([2]), np.array([0.9]))
+        assert result.shape == image.shape
+
+    def test_real_yolo_model(self):
+        pytest.importorskip("ultralytics")
+        task = ObjectDetectionTask(DetectionMethod.YOLO)
+        image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        boxes, labels, scores = task.post_process(task.execute(task.pre_process(image)), threshold=0.5)
+        assert len(boxes) == len(labels) == len(scores)
+
+
+class TestObjectDetectionTaskSsd:
+    """Test suite for the SSD code path of ObjectDetectionTask."""
+
+    def test_execute_and_post_process(self):
+        task = ObjectDetectionTask(DetectionMethod.SSD)
+        assert task.categories[1] == 'person'
+
+        image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        outputs = task.execute(task.pre_process(image))
+        boxes, labels, scores = task.post_process(outputs, threshold=0.5)
+
+        assert len(boxes) == len(labels) == len(scores)
+        if len(scores) > 0:
+            assert np.all(scores >= 0.5)
+
+
+def test_faster_rcnn_categories_match_torchvision_indexing():
+    """torchvision detectors use 91-index COCO labels with N/A gaps (13 = stop sign)."""
+    task = ObjectDetectionTask(DetectionMethod.FASTER_RCNN)
+    assert task.categories[13] == 'stop sign'
+    assert len(task.categories) == 91

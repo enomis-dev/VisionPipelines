@@ -11,7 +11,7 @@ class ObjectDetectionPipeline(TaskBasedPipeline):
     Pipeline for object detection in images.
     
     This pipeline detects objects in images using various detection methods
-    (e.g., Faster R-CNN) and returns bounding boxes, labels, and scores.
+    (Faster R-CNN, SSD, YOLO) and returns bounding boxes, labels, and scores.
     """
     
     def __init__(
