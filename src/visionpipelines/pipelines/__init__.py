@@ -1,4 +1,5 @@
 from visionpipelines.pipelines.object_detection_pipeline import ObjectDetectionPipeline
+from visionpipelines.pipelines.optical_flow_pipeline import OpticalFlowPipeline
 from visionpipelines.pipelines.registration_pipeline import RegistrationPipeline
 from visionpipelines.pipelines.segmentation_pipeline import SegmentationPipeline
 from visionpipelines.pipelines.vision_pipeline import (
@@ -9,6 +10,7 @@ from visionpipelines.pipelines.vision_pipeline import (
 
 __all__ = [
     "ObjectDetectionPipeline",
+    "OpticalFlowPipeline",
     "RegistrationPipeline",
     "SegmentationPipeline",
     "FunctionBasedPipeline",

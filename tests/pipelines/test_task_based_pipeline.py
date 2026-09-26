@@ -4,7 +4,7 @@ import torch
 from visionpipelines.pipelines.vision_pipeline import TaskBasedPipeline
 from visionpipelines.tasks.task import Task
 from visionpipelines.constants import RegistrationMethod, DetectionMethod
-from visionpipelines.tasks.registration_task import RegistrationTask
+from visionpipelines.tasks.registration_task import RegistrationResult, RegistrationTask
 from visionpipelines.tasks.object_detection_task import ObjectDetectionTask
 
 
@@ -106,14 +106,14 @@ class TestTaskBasedPipeline:
         
         # The registration might fail if not enough matches, so handle both cases
         try:
-            registered_image, keypoints = pipeline.run_pipeline(image1, image2)
-            
+            result = pipeline.run_pipeline(image1, image2)
+
             # Check outputs if successful
-            assert isinstance(registered_image, np.ndarray)
-            assert isinstance(keypoints, np.ndarray)
-            assert registered_image.shape == image1.shape
-            assert keypoints.shape[0] == 4  # 4 rows: x1, y1, x2, y2
-            assert keypoints.shape[1] > 0  # Should have some keypoints
+            assert isinstance(result, RegistrationResult)
+            assert result.registered_image.shape == image1.shape
+            assert result.transform.shape == (3, 3)
+            assert result.matches.shape[1] == 4  # columns: x1, y1, x2, y2
+            assert result.matches.shape[0] > 0  # Should have some matches
         except ValueError as e:
             # If registration fails due to insufficient matches, that's acceptable for testing
             # Just verify it's the expected error type

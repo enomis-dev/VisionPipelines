@@ -50,9 +50,29 @@ image1 = cv2.imread("reference.jpg")
 image2 = cv2.imread("moving.jpg")
 
 pipeline = RegistrationPipeline(RegistrationMethod.ORB)
-registered_image, keypoints = pipeline.run_pipeline(image1, image2)
+result = pipeline.run_pipeline(image1, image2)
 
-pipeline.plot_matches(image1, image2, keypoints)
+result.registered_image  # image2 warped onto image1, in its original colors
+result.transform         # 3x3 homography mapping image2 -> image1, reusable for masks, annotations, ...
+result.inlier_ratio      # fraction of matches kept by RANSAC, a rough quality indicator
+
+pipeline.plot_matches(image1, image2, result.matches)
+```
+
+### Optical flow
+
+```python
+import cv2
+from visionpipelines import OpticalFlowPipeline, OpticalFlowMethod
+
+image1 = cv2.imread("frame1.jpg")
+image2 = cv2.imread("frame2.jpg")
+
+pipeline = OpticalFlowPipeline(OpticalFlowMethod.RAFT_LARGE)  # or RAFT_SMALL, FARNEBACK
+flow = pipeline.run_pipeline(image1, image2)  # (H, W, 2): per-pixel (dx, dy) from image1 to image2
+
+colored = pipeline.flow_to_color(flow)  # RGB visualization: hue = direction, saturation = magnitude
+aligned = pipeline.warp(image2, flow)   # dense, non-rigid registration of image2 onto image1
 ```
 
 ### Semantic segmentation
