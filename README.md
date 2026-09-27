@@ -107,10 +107,10 @@ result = pipeline.run_pipeline(image_tensor)
 ## Architecture
 
 - **`Task`** — encapsulates a single operation (`pre_process` → `execute` → `post_process`), e.g. `ObjectDetectionTask`, `RegistrationTask`, `SegmentationTask`.
-- **`TaskBasedPipeline`** — runs a `Task` through its full lifecycle; used by `ObjectDetectionPipeline`, `RegistrationPipeline`, and `SegmentationPipeline`.
+- **`TaskBasedPipeline`** — runs a `Task` through its full lifecycle; used by `ObjectDetectionPipeline`, `SegmentationPipeline`, `RegistrationPipeline`, and `OpticalFlowPipeline`.
 - **`FunctionBasedPipeline`** — chains plain callables for lighter-weight transformations.
 
-To add a new capability, implement a `Task` subclass and, if useful, wrap it in a dedicated pipeline.
+See [docs/architecture.md](docs/architecture.md) for the class diagram, how data flows between steps, conventions, and a step-by-step guide to adding a new task.
 
 ## Contributing to VisionPipelines
 
